@@ -20,33 +20,51 @@ import onnx
 import zoo.pipeline.api.keras.models as zmodels
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
+import warnings
 
 
 class OnnxInput(object):
+    """
+    .. note:: `zoo.pipeline.api.onnx` is deprecated in 0.10.0
+    This will be removed in future releases.
+     """
     def __init__(self, name, zvalue, data=None):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         self.name = name
         self.zvalue = zvalue  # zvalue is a Input or Parameter
         self.data = data  # data is a ndarray
 
 
 class OnnxLoader(object):
-
+    """
+    .. note:: `zoo.pipeline.api.onnx` is deprecated in 0.10.0
+    This will be removed in future releases.
+    """
     training = False
 
     def __init__(self, onnx_graph):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         self.graph = onnx_graph
         self._all_tensors = {}  # including the original input tensor or the immediate tensor.
         self.initializer = {}  # name -> ndarray
         self._inputs = OrderedDict()  # the original input tensor only.
 
     @classmethod
-    def from_path(cls, onnx_path):
+    def from_path(cls, onnx_path, is_training=False):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         onnx_model = onnx.load(onnx_path)
-        return cls(onnx_model.graph)
+        try:
+            zmodel = OnnxLoader(onnx_model.graph).to_keras()
+        except Exception as e:
+            print(onnx_model)
+            raise e
+        zmodel.training(is_training=is_training)
+        return zmodel
 
     @staticmethod
     # inputs_dict is a list of batch data
-    def run_node(node, inputs):
+    def run_node(node, inputs, is_training=False):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         inputs_list = []
         assert len(inputs) == len(list(node.input))
         for node_input, input_data in zip(node.input, inputs):
@@ -56,6 +74,7 @@ class OnnxLoader(object):
 
         model = zmodels.Model(input=[i.zvalue for i in mapper.model_inputs], output=out_tensor)
         data = [i.data for i in mapper.model_inputs]
+        model.training(is_training)
         output = model.forward(data if len(data) > 1 else data[0])
         result = {}
         if isinstance(output, list):
@@ -69,6 +88,7 @@ class OnnxLoader(object):
     def to_keras(self):
         """Convert a Onnx model to KerasNet model.
       """
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         # parse network inputs, aka parameters
         for init_tensor in self.graph.initializer:
             if not init_tensor.name.strip():
@@ -92,6 +112,8 @@ class OnnxLoader(object):
         for node in self.graph.node:
             inputs = []
             for i in node.input:
+                if i == "":
+                    continue
                 if i not in self._all_tensors:
                     raise Exception("Cannot find {}".format(i))
                 inputs.append(self._all_tensors[i])

@@ -45,19 +45,8 @@ Stop Verticals
    :FOR                ${vertical}         IN                @{verticalList}
    \                   Operate Vertical    ${vertical}       stop               deployed/stopped
 
-Check DataSource
-   Log To Console   check data source for zoo test
-   Create Session   webhdfs               http://${public_hdfs_host}:50070
-   ${resp}=         Get Request           webhdfs        /webhdfs/v1/${imagenet}?op=GETFILESTATUS
-   Should Contain   ${resp.content}       DIRECTORY
-   ${resp}=         Get Request           webhdfs        /webhdfs/v1/${mnist}?op=GETFILESTATUS
-   Should Contain   ${resp.content}       DIRECTORY
-   ${resp}=         Get Request           webhdfs        /webhdfs/v1/${cifar}?op=GETFILESTATUS
-   Should Contain   ${resp.content}       DIRECTORY
-
 Prepare DataSource And Verticals
    Get Zoo Version
-   Check DataSource
    Check Verticals
 
 Check Verticals
@@ -71,7 +60,7 @@ Run Shell
    Should Be Equal As Integers      ${rc}          0
 
 Get Zoo Version
-   ${root}=               Parse XML           pom.xml
+   ${root}=               Parse XML           zoo/pom.xml
    ${version}=            Get Element Text    ${root}    version
    Log To Console         ${version}
    Set Global Variable    ${version}
